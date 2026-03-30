@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>Desk Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#F7F5F0;--surface:#FFFFFF;--border:rgba(0,0,0,0.1);
+    --text:#1A1A1A;--muted:#888880;--hint:#BBBBB5;
+    --ali-bg:#EEEDFE;--ali-text:#3C3489;--ali-border:#534AB7;
+    --mah-bg:#E1F5EE;--mah-text:#085041;--mah-border:#0F6E56;
+    --error:#E24B4A;--radius:16px;
+  }
+  body.night{
+    --bg:#141414;--surface:#1E1E1E;--border:rgba(255,255,255,0.09);
+    --text:#F0EEE8;--muted:#666662;--hint:#3A3A38;
+    --ali-bg:#26215C;--ali-text:#CECBF6;
+    --mah-bg:#04342C;--mah-text:#9FE1CB;
+  }
+  html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background .5s;overflow:hidden;}
+
+  #announcement{position:fixed;top:0;left:0;right:0;padding:11px 20px;font-size:13px;font-weight:500;text-align:center;display:none;z-index:10;}
+  #announcement.on{display:block;}
+
+  #dinner-strip{position:fixed;bottom:0;left:0;right:0;padding:9px 20px;background:var(--surface);border-top:0.5px solid var(--border);font-size:12px;color:var(--muted);text-align:center;display:none;}
+  #dinner-strip.on{display:block;}
+  #dinner-strip strong{color:var(--text);font-weight:500;}
+
+  #clock{font-family:'DM Mono',monospace;font-size:62px;font-weight:300;letter-spacing:-2px;text-align:center;margin-bottom:4px;}
+  #date-str{font-size:13px;color:var(--muted);text-align:center;margin-bottom:44px;}
+  #who-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:14px;}
+
+  #user-btns{display:flex;gap:14px;}
+  .user-btn{width:130px;padding:16px 0;border-radius:var(--radius);border:1.5px solid transparent;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:transform .12s,border-color .15s;text-align:center;}
+  .user-btn:active{transform:scale(.96);}
+  #btn-ali{background:var(--ali-bg);color:var(--ali-text);}
+  #btn-ali.sel{border-color:var(--ali-border);}
+  #btn-mah{background:var(--mah-bg);color:var(--mah-text);}
+  #btn-mah.sel{border-color:var(--mah-border);}
+
+  #pin-section{display:none;flex-direction:column;align-items:center;}
+  #pin-section.on{display:flex;}
+  #pin-who{font-size:13px;color:var(--muted);margin-bottom:20px;}
+  #pin-dots{display:flex;gap:12px;margin-bottom:28px;}
+  .dot{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--muted);background:transparent;transition:background .15s;}
+  .dot.fill{background:var(--text);border-color:var(--text);}
+  .dot.err{background:var(--error);border-color:var(--error);}
+  #pin-grid{display:grid;grid-template-columns:repeat(3,68px);grid-template-rows:repeat(4,68px);gap:10px;}
+  .pk{width:68px;height:68px;border-radius:50%;border:0.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .1s,transform .08s;user-select:none;}
+  .pk:active{background:var(--border);transform:scale(.93);}
+  .pk.del{font-size:22px;color:var(--muted);border-color:transparent;background:transparent;}
+  .pk.empty{border:none;background:transparent;cursor:default;}
+  #pin-err{font-size:12px;color:var(--error);margin-top:16px;height:16px;text-align:center;}
+  #back-btn{margin-top:20px;font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  #back-btn:hover{color:var(--text);}
+
+  /* invisible admin tap zone bottom-right */
+  #admin-zone{position:fixed;bottom:0;right:0;width:48px;height:48px;cursor:pointer;z-index:20;}
+</style>
+</head>
+<body>
+
+<div id="announcement"></div>
+
+<div id="clock">00:00</div>
+<div id="date-str"></div>
+<div id="who-label">Who's at the desk?</div>
+
+<div id="user-btns">
+  <button class="user-btn" id="btn-ali" onclick="pick('ali')">Ali</button>
+  <button class="user-btn" id="btn-mah" onclick="pick('mah')">Mahsa</button>
+</div>
+
+<div id="pin-section">
+  <div id="pin-who"></div>
+  <div id="pin-dots">
+    <div class="dot" id="d0"></div><div class="dot" id="d1"></div>
+    <div class="dot" id="d2"></div><div class="dot" id="d3"></div>
+  </div>
+  <div id="pin-grid">
+    <button class="pk" onclick="press('1')">1</button>
+    <button class="pk" onclick="press('2')">2</button>
+    <button class="pk" onclick="press('3')">3</button>
+    <button class="pk" onclick="press('4')">4</button>
+    <button class="pk" onclick="press('5')">5</button>
+    <button class="pk" onclick="press('6')">6</button>
+    <button class="pk" onclick="press('7')">7</button>
+    <button class="pk" onclick="press('8')">8</button>
+    <button class="pk" onclick="press('9')">9</button>
+    <button class="pk empty"></button>
+    <button class="pk" onclick="press('0')">0</button>
+    <button class="pk del" onclick="del()">⌫</button>
+  </div>
+  <div id="pin-err"></div>
+  <button id="back-btn" onclick="back()">← Back</button>
+</div>
+
+<div id="dinner-strip"></div>
+<div id="admin-zone" onclick="pickAdmin()" title=""></div>
+
+<script>
+  function pins(){return JSON.parse(localStorage.getItem('hub-pins')||'{"ali":"1234","mah":"5678","admin":"0000"}');}
+  const DEST={ali:'ali.html',mah:'mahsa.html',admin:'admin.html'};
+
+  /* clock */
+  const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function pad(n){return String(n).padStart(2,'0');}
+  function tick(){
+    const n=new Date(),h=n.getHours(),m=n.getMinutes();
+    document.getElementById('clock').textContent=pad(h)+':'+pad(m);
+    document.getElementById('date-str').textContent=DAYS[n.getDay()]+', '+n.getDate()+' '+MON[n.getMonth()]+' '+n.getFullYear();
+    document.body.classList.toggle('night',h>=20||h<7);
+  }
+  tick();setInterval(tick,10000);
+
+  /* announcement */
+  (function(){
+    const txt=localStorage.getItem('hub-ann')||'';
+    const el=document.getElementById('announcement');
+    if(txt.trim()){
+      el.textContent=txt;
+      el.style.background=localStorage.getItem('hub-ann-bg')||'#EEEDFE';
+      el.style.color=localStorage.getItem('hub-ann-fg')||'#3C3489';
+      el.classList.add('on');
+    }
+  })();
+
+  /* dinner */
+  (function(){
+    const meals=JSON.parse(localStorage.getItem('hub-meals')||'{}');
+    const today=new Date().toISOString().slice(0,10);
+    const strip=document.getElementById('dinner-strip');
+    if(meals[today]){
+      strip.innerHTML='🍽 Tonight: <strong>'+meals[today]+'</strong>';
+      strip.classList.add('on');
+    }
+  })();
+
+  /* pin flow */
+  let who=null,pin='';
+  function showPad(label){
+    document.getElementById('user-btns').style.display='none';
+    document.getElementById('who-label').style.display='none';
+    document.getElementById('pin-who').textContent=label;
+    document.getElementById('pin-section').classList.add('on');
+    document.getElementById('pin-err').textContent='';
+    pin='';dots();
+  }
+  function pick(w){
+    who=w;
+    document.getElementById('btn-ali').classList.toggle('sel',w==='ali');
+    document.getElementById('btn-mah').classList.toggle('sel',w==='mah');
+    showPad('Enter your PIN, '+(w==='ali'?'Ali':'Mahsa'));
+  }
+  function pickAdmin(){who='admin';showPad('Admin PIN');}
+  function back(){
+    who=null;pin='';
+    document.getElementById('pin-section').classList.remove('on');
+    document.getElementById('user-btns').style.display='flex';
+    document.getElementById('who-label').style.display='block';
+    document.getElementById('btn-ali').classList.remove('sel');
+    document.getElementById('btn-mah').classList.remove('sel');
+    dots();
+  }
+  function press(d){if(pin.length>=4)return;pin+=d;dots();if(pin.length===4)check();}
+  function del(){pin=pin.slice(0,-1);dots();}
+  function dots(){
+    for(let i=0;i<4;i++){
+      const d=document.getElementById('d'+i);
+      d.classList.toggle('fill',i<pin.length);
+      d.classList.remove('err');
+    }
+  }
+  function check(){
+    const p=pins();
+    const correct=who==='admin'?p.admin:p[who];
+    if(pin===correct){window.location.href=DEST[who];}
+    else{
+      for(let i=0;i<4;i++)document.getElementById('d'+i).classList.add('err');
+      document.getElementById('pin-err').textContent='Wrong PIN, try again';
+      setTimeout(()=>{pin='';dots();document.getElementById('pin-err').textContent='';},900);
+    }
+  }
+  document.addEventListener('keydown',e=>{
+    if(!who)return;
+    if(e.key>='0'&&e.key<='9')press(e.key);
+    if(e.key==='Backspace')del();
+  });
+</script>
+</body>
+</html>

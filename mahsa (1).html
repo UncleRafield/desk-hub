@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>Mahsa — Desk Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#F7F5F0;--surface:#FFFFFF;--border:rgba(0,0,0,0.09);--border-md:rgba(0,0,0,0.14);
+    --text:#1A1A1A;--muted:#888880;--hint:#BBBBB5;
+    --accent:#0F6E56;--acc-bg:#E1F5EE;--acc-text:#085041;
+    --radius:14px;--radius-sm:8px;
+  }
+  body.night{
+    --bg:#141414;--surface:#1E1E1E;--border:rgba(255,255,255,0.08);--border-md:rgba(255,255,255,0.14);
+    --text:#F0EEE8;--muted:#666662;--hint:#3A3A38;
+    --accent:#5DCAA5;--acc-bg:#04342C;--acc-text:#9FE1CB;
+  }
+  html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;transition:background .5s,color .5s;overflow:hidden;}
+  #app{width:100vw;height:100vh;display:grid;grid-template-columns:260px 1fr 1fr;grid-template-rows:110px 1fr;gap:12px;padding:16px;}
+  .card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;transition:background .5s,border-color .5s;overflow:hidden;}
+  .lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:8px;}
+  #clock-card{grid-column:1/2;grid-row:1/2;display:flex;flex-direction:column;justify-content:center;}
+  #time{font-family:'DM Mono',monospace;font-size:46px;font-weight:300;letter-spacing:-2px;line-height:1;}
+  #date-str{font-size:12px;color:var(--muted);margin-top:5px;}
+  #weather-card{grid-column:2/3;grid-row:1/2;display:flex;align-items:center;gap:16px;}
+  #w-icon{font-size:38px;flex-shrink:0;}
+  #w-temp{font-size:30px;font-weight:300;letter-spacing:-1px;line-height:1;}
+  #w-desc{font-size:12px;color:var(--muted);margin-top:3px;}
+  #w-extra{font-size:11px;color:var(--hint);margin-top:2px;}
+  #top-right{grid-column:3/4;grid-row:1/2;display:flex;align-items:center;justify-content:space-between;}
+  #user-badge{font-size:13px;font-weight:500;padding:5px 14px;border-radius:99px;background:var(--acc-bg);color:var(--acc-text);}
+  .icon-btn{font-size:12px;color:var(--muted);background:none;border:0.5px solid var(--border-md);border-radius:var(--radius-sm);padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .12s;}
+  .icon-btn:hover{background:var(--border);}
+  #tasks-card{grid-column:1/2;grid-row:2/3;display:flex;flex-direction:column;}
+  .task-header{display:flex;align-items:center;margin-bottom:10px;}
+  .task-count{font-size:11px;color:var(--hint);margin-left:auto;}
+  .task-input-row{display:flex;gap:6px;margin-bottom:10px;}
+  .task-input{flex:1;font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 11px;border:0.5px solid var(--border-md);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;transition:border-color .15s;}
+  .task-input::placeholder{color:var(--hint);}
+  .task-input:focus{border-color:var(--accent);}
+  .add-btn{width:30px;height:30px;border-radius:50%;border:0.5px solid var(--border-md);background:var(--bg);color:var(--text);font-size:20px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s;}
+  .add-btn:hover{background:var(--border);}
+  .task-list{list-style:none;flex:1;overflow-y:auto;}
+  .task-list::-webkit-scrollbar{width:3px;}
+  .task-list::-webkit-scrollbar-thumb{background:var(--hint);border-radius:2px;}
+  .task-item{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:13px;line-height:1.4;}
+  .task-item:last-child{border-bottom:none;}
+  .task-cb{width:15px;height:15px;border:0.5px solid var(--border-md);border-radius:4px;cursor:pointer;flex-shrink:0;margin-top:1px;appearance:none;-webkit-appearance:none;position:relative;background:transparent;transition:background .12s,border-color .12s;}
+  .task-cb:checked{background:var(--accent);border-color:var(--accent);}
+  .task-cb:checked::after{content:'';position:absolute;left:3px;top:1.5px;width:5px;height:8px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg);}
+  .task-text{flex:1;color:var(--text);}
+  .task-text.done{text-decoration:line-through;color:var(--hint);}
+  .task-del{font-size:16px;line-height:1;color:var(--hint);background:none;border:none;cursor:pointer;padding:0;opacity:0;transition:opacity .1s;}
+  .task-item:hover .task-del{opacity:1;}
+  #notes-card{grid-column:2/4;grid-row:2/3;display:flex;flex-direction:column;}
+  #notes-area{flex:1;font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.7;border:none;background:transparent;color:var(--text);resize:none;outline:none;width:100%;}
+  #notes-area::placeholder{color:var(--hint);}
+  #ann{position:fixed;top:0;left:0;right:0;padding:10px 20px;font-size:13px;font-weight:500;text-align:center;display:none;z-index:10;}
+  #ann.on{display:block;}
+</style>
+</head>
+<body>
+<div id="ann"></div>
+<div id="app">
+  <div class="card" id="clock-card">
+    <div id="time">00:00:00</div>
+    <div id="date-str"></div>
+  </div>
+  <div class="card" id="weather-card">
+    <div id="w-icon">—</div>
+    <div>
+      <div class="lbl">London</div>
+      <div id="w-temp">—°C</div>
+      <div id="w-desc">Loading...</div>
+      <div id="w-extra"></div>
+    </div>
+  </div>
+  <div class="card" id="top-right">
+    <span id="user-badge">Mahsa</span>
+    <button class="icon-btn" onclick="window.location.href='index.html'">← Log out</button>
+  </div>
+  <div class="card" id="tasks-card">
+    <div class="task-header">
+      <div class="lbl" style="margin-bottom:0">Tasks</div>
+      <span class="task-count" id="tc"></span>
+    </div>
+    <div class="task-input-row" style="margin-top:10px">
+      <input class="task-input" id="ti" type="text" placeholder="Add a task..." maxlength="80"/>
+      <button class="add-btn" onclick="add()">+</button>
+    </div>
+    <ul class="task-list" id="tl"></ul>
+  </div>
+  <div class="card" id="notes-card">
+    <div class="lbl">Private notes</div>
+    <textarea id="notes-area" placeholder="Just for you…"></textarea>
+  </div>
+</div>
+<script>
+  const WHO='mahsa';
+  const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function pad(n){return String(n).padStart(2,'0');}
+  function tick(){
+    const n=new Date(),h=n.getHours(),m=n.getMinutes(),s=n.getSeconds();
+    document.getElementById('time').textContent=pad(h)+':'+pad(m)+':'+pad(s);
+    document.getElementById('date-str').textContent=DAYS[n.getDay()]+', '+n.getDate()+' '+MONTHS[n.getMonth()]+' '+n.getFullYear();
+    document.body.classList.toggle('night',h>=20||h<7);
+  }
+  tick();setInterval(tick,1000);
+  (function(){
+    const txt=localStorage.getItem('hub-ann')||'';
+    const el=document.getElementById('ann');
+    if(txt.trim()){
+      el.textContent=txt;
+      el.style.background=localStorage.getItem('hub-ann-bg')||'#E1F5EE';
+      el.style.color=localStorage.getItem('hub-ann-fg')||'#085041';
+      el.classList.add('on');
+    }
+  })();
+  const WI={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',95:'⛈️',96:'⛈️',99:'⛈️'};
+  const WD={0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',48:'Icy fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Showers',81:'Heavy showers',82:'Violent showers',95:'Thunderstorm',96:'Thunderstorm + hail',99:'Heavy thunderstorm'};
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=51.51&longitude=-0.13&current_weather=true&forecast_days=1')
+    .then(r=>r.json()).then(d=>{
+      const c=d.current_weather,t=Math.round(c.temperature),cd=c.weathercode;
+      document.getElementById('w-icon').textContent=WI[cd]||'🌡️';
+      document.getElementById('w-temp').textContent=t+'°C';
+      document.getElementById('w-desc').textContent=WD[cd]||'Mixed';
+      document.getElementById('w-extra').textContent='Wind '+Math.round(c.windspeed)+' km/h';
+    }).catch(()=>{document.getElementById('w-desc').textContent='No connection';});
+  function save(){
+    const data=Array.from(document.querySelectorAll('#tl .task-item')).map(li=>({
+      text:li.querySelector('.task-text').textContent,
+      done:li.querySelector('.task-cb').checked
+    }));
+    localStorage.setItem('hub-tasks-'+WHO,JSON.stringify(data));
+  }
+  function count(){
+    const all=document.querySelectorAll('#tl .task-item').length;
+    const done=document.querySelectorAll('#tl .task-cb:checked').length;
+    document.getElementById('tc').textContent=done+'/'+all+' done';
+  }
+  function mkItem(text,done){
+    const li=document.createElement('li');li.className='task-item';
+    const cb=document.createElement('input');cb.type='checkbox';cb.className='task-cb';cb.checked=!!done;
+    cb.onchange=()=>{sp.classList.toggle('done',cb.checked);save();count();};
+    const sp=document.createElement('span');sp.className='task-text'+(done?' done':'');sp.textContent=text;
+    const dl=document.createElement('button');dl.className='task-del';dl.textContent='×';
+    dl.onclick=()=>{li.remove();save();count();};
+    li.appendChild(cb);li.appendChild(sp);li.appendChild(dl);
+    return li;
+  }
+  function add(){
+    const inp=document.getElementById('ti'),t=inp.value.trim();
+    if(!t)return;
+    document.getElementById('tl').appendChild(mkItem(t,false));
+    inp.value='';save();count();
+  }
+  function load(){
+    const raw=localStorage.getItem('hub-tasks-'+WHO);
+    if(raw)JSON.parse(raw).forEach(t=>document.getElementById('tl').appendChild(mkItem(t.text,t.done)));
+    const notes=localStorage.getItem('hub-notes-'+WHO);
+    if(notes!==null)document.getElementById('notes-area').value=notes;
+    count();
+  }
+  document.getElementById('ti').addEventListener('keydown',e=>{if(e.key==='Enter')add();});
+  document.getElementById('notes-area').addEventListener('input',()=>localStorage.setItem('hub-notes-'+WHO,document.getElementById('notes-area').value));
+  load();
+</script>
+</body>
+</html>

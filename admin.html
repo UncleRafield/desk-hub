@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>Admin — Desk Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#F7F5F0;--surface:#FFFFFF;--border:rgba(0,0,0,0.09);--border-md:rgba(0,0,0,0.16);
+    --text:#1A1A1A;--muted:#888880;--hint:#BBBBB5;
+    --amber-bg:#FAEEDA;--amber-text:#633806;--amber-border:#BA7517;
+    --green-bg:#E1F5EE;--green-text:#085041;--green-border:#0F6E56;
+    --error:#E24B4A;--success:#1D9E75;
+    --radius:14px;--radius-sm:8px;
+  }
+  body.night{
+    --bg:#141414;--surface:#1E1E1E;--border:rgba(255,255,255,0.08);--border-md:rgba(255,255,255,0.16);
+    --text:#F0EEE8;--muted:#666662;--hint:#3A3A38;
+    --amber-bg:#412402;--amber-text:#FAC775;
+    --green-bg:#04342C;--green-text:#9FE1CB;
+  }
+  html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;transition:background .5s,color .5s;overflow:hidden;}
+
+  #app{width:100vw;height:100vh;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:64px 1fr 1fr;gap:12px;padding:16px;}
+
+  /* top bar */
+  #topbar{grid-column:1/4;grid-row:1/2;display:flex;align-items:center;justify-content:space-between;}
+  #admin-badge{font-size:12px;font-weight:500;padding:4px 12px;border-radius:99px;background:var(--amber-bg);color:var(--amber-text);}
+  #topbar h1{font-size:15px;font-weight:500;color:var(--text);}
+  .icon-btn{font-size:12px;color:var(--muted);background:none;border:0.5px solid var(--border-md);border-radius:var(--radius-sm);padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .12s;}
+  .icon-btn:hover{background:var(--border);}
+
+  /* cards */
+  .card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;transition:background .5s,border-color .5s;overflow:hidden;display:flex;flex-direction:column;}
+  .lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:12px;}
+
+  /* announcement */
+  #ann-card{grid-column:1/2;grid-row:2/3;}
+  #ann-text{width:100%;font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 10px;border:0.5px solid var(--border-md);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:none;height:64px;margin-bottom:10px;}
+  #ann-text::placeholder{color:var(--hint);}
+  .color-row{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+  .color-row span{font-size:12px;color:var(--muted);}
+  .color-pill{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s;}
+  .color-pill.sel{border-color:var(--text);}
+  .color-pill:hover{transform:scale(1.15);}
+  .btn{padding:7px 16px;border-radius:var(--radius-sm);border:0.5px solid var(--border-md);background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:background .12s;}
+  .btn:hover{background:var(--border);}
+  .btn.primary{background:var(--text);color:var(--bg);border-color:transparent;}
+  .btn.primary:hover{opacity:.85;}
+  .btn.danger{color:var(--error);border-color:rgba(226,75,74,.25);}
+  .btn.danger:hover{background:rgba(226,75,74,.08);}
+  .btn-row{display:flex;gap:8px;margin-top:auto;}
+  .msg{font-size:11px;margin-top:8px;height:14px;}
+  .msg.ok{color:var(--success);}
+  .msg.bad{color:var(--error);}
+
+  /* preview */
+  #ann-preview{font-size:12px;padding:8px 12px;border-radius:var(--radius-sm);margin-bottom:10px;display:none;font-weight:500;}
+  #ann-preview.on{display:block;}
+
+  /* meals */
+  #meals-card{grid-column:2/3;grid-row:2/4;overflow-y:auto;}
+  .meal-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);}
+  .meal-row:last-child{border-bottom:none;}
+  .meal-day{font-size:12px;color:var(--muted);width:36px;flex-shrink:0;}
+  .meal-day.today{color:var(--text);font-weight:500;}
+  .meal-input{flex:1;font-family:'DM Sans',sans-serif;font-size:13px;padding:5px 9px;border:0.5px solid var(--border-md);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;}
+  .meal-input::placeholder{color:var(--hint);}
+  .meal-input:focus{border-color:var(--green-border);}
+  .meal-input.has-value{background:var(--green-bg);color:var(--green-text);border-color:transparent;}
+  #meals-save-msg{font-size:11px;color:var(--success);height:14px;margin-top:8px;}
+
+  /* shared todo */
+  #shared-card{grid-column:3/4;grid-row:2/4;overflow:hidden;}
+  .task-input-row{display:flex;gap:6px;margin-bottom:10px;}
+  .task-input{flex:1;font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 11px;border:0.5px solid var(--border-md);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;}
+  .task-input::placeholder{color:var(--hint);}
+  .task-input:focus{border-color:var(--amber-border);}
+  .add-btn{width:30px;height:30px;border-radius:50%;border:0.5px solid var(--border-md);background:var(--bg);color:var(--text);font-size:20px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .add-btn:hover{background:var(--border);}
+  .task-list{list-style:none;flex:1;overflow-y:auto;}
+  .task-list::-webkit-scrollbar{width:3px;}
+  .task-list::-webkit-scrollbar-thumb{background:var(--hint);border-radius:2px;}
+  .task-item{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:13px;line-height:1.4;}
+  .task-item:last-child{border-bottom:none;}
+  .task-cb{width:15px;height:15px;border:0.5px solid var(--border-md);border-radius:4px;cursor:pointer;flex-shrink:0;margin-top:1px;appearance:none;-webkit-appearance:none;position:relative;background:transparent;}
+  .task-cb:checked{background:var(--amber-border);border-color:var(--amber-border);}
+  .task-cb:checked::after{content:'';position:absolute;left:3px;top:1.5px;width:5px;height:8px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg);}
+  .task-text{flex:1;color:var(--text);}
+  .task-text.done{text-decoration:line-through;color:var(--hint);}
+  .task-del{font-size:16px;line-height:1;color:var(--hint);background:none;border:none;cursor:pointer;padding:0;opacity:0;}
+  .task-item:hover .task-del{opacity:1;}
+
+  /* PINs */
+  #pins-card{grid-column:1/2;grid-row:3/4;}
+  .pin-field-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .pin-who-label{font-size:12px;color:var(--muted);width:44px;flex-shrink:0;}
+  .pin-input{width:90px;font-family:'DM Mono',monospace;font-size:14px;padding:5px 9px;border:0.5px solid var(--border-md);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;letter-spacing:2px;}
+  .pin-input:focus{border-color:var(--amber-border);}
+  .pin-hint{font-size:11px;color:var(--hint);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <span id="admin-badge">Admin</span>
+    <h1>Desk Hub — Admin</h1>
+    <button class="icon-btn" onclick="window.location.href='index.html'">← Back to hub</button>
+  </div>
+
+  <!-- Announcement -->
+  <div class="card" id="ann-card">
+    <div class="lbl">Announcement banner</div>
+    <div id="ann-preview"></div>
+    <textarea id="ann-text" placeholder="Type a message to show on the home screen…"></textarea>
+    <div class="color-row">
+      <span>Colour</span>
+      <div class="color-pill sel" style="background:#EEEDFE" data-bg="#EEEDFE" data-fg="#3C3489" onclick="pickColor(this)"></div>
+      <div class="color-pill" style="background:#E1F5EE" data-bg="#E1F5EE" data-fg="#085041" onclick="pickColor(this)"></div>
+      <div class="color-pill" style="background:#FAEEDA" data-bg="#FAEEDA" data-fg="#633806" onclick="pickColor(this)"></div>
+      <div class="color-pill" style="background:#FAECE7" data-bg="#FAECE7" data-fg="#712B13" onclick="pickColor(this)"></div>
+      <div class="color-pill" style="background:#FCEBEB" data-bg="#FCEBEB" data-fg="#501313" onclick="pickColor(this)"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="saveAnn()">Save</button>
+      <button class="btn danger" onclick="clearAnn()">Clear</button>
+    </div>
+    <div class="msg" id="ann-msg"></div>
+  </div>
+
+  <!-- Meal planner -->
+  <div class="card" id="meals-card">
+    <div class="lbl">Meal planner — this week</div>
+    <div id="meal-rows"></div>
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn primary" onclick="saveMeals()">Save meals</button>
+    </div>
+    <div id="meals-save-msg"></div>
+  </div>
+
+  <!-- Shared family todo -->
+  <div class="card" id="shared-card">
+    <div class="lbl">Shared family tasks</div>
+    <div class="task-input-row">
+      <input class="task-input" id="sh-ti" type="text" placeholder="Add a shared task…" maxlength="80"/>
+      <button class="add-btn" onclick="shAdd()">+</button>
+    </div>
+    <ul class="task-list" id="sh-tl"></ul>
+  </div>
+
+  <!-- PINs -->
+  <div class="card" id="pins-card">
+    <div class="lbl">Change PINs</div>
+    <div class="pin-field-row">
+      <span class="pin-who-label">Ali</span>
+      <input class="pin-input" id="pin-ali" type="password" maxlength="4" placeholder="••••" inputmode="numeric"/>
+      <span class="pin-hint">4 digits</span>
+    </div>
+    <div class="pin-field-row">
+      <span class="pin-who-label">Mahsa</span>
+      <input class="pin-input" id="pin-mah" type="password" maxlength="4" placeholder="••••" inputmode="numeric"/>
+    </div>
+    <div class="pin-field-row">
+      <span class="pin-who-label">Admin</span>
+      <input class="pin-input" id="pin-admin" type="password" maxlength="4" placeholder="••••" inputmode="numeric"/>
+    </div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn primary" onclick="savePins()">Save PINs</button>
+    </div>
+    <div class="msg" id="pin-msg"></div>
+  </div>
+
+</div>
+<script>
+  /* ── Night mode ── */
+  (function(){const h=new Date().getHours();document.body.classList.toggle('night',h>=20||h<7);})();
+
+  /* ── Announcement ── */
+  let annBg='#EEEDFE', annFg='#3C3489';
+
+  function pickColor(el){
+    document.querySelectorAll('.color-pill').forEach(p=>p.classList.remove('sel'));
+    el.classList.add('sel');
+    annBg=el.dataset.bg; annFg=el.dataset.fg;
+    updatePreview();
+  }
+
+  function updatePreview(){
+    const txt=document.getElementById('ann-text').value.trim();
+    const p=document.getElementById('ann-preview');
+    if(txt){p.textContent=txt;p.style.background=annBg;p.style.color=annFg;p.classList.add('on');}
+    else{p.classList.remove('on');}
+  }
+
+  function saveAnn(){
+    const txt=document.getElementById('ann-text').value.trim();
+    localStorage.setItem('hub-ann',txt);
+    localStorage.setItem('hub-ann-bg',annBg);
+    localStorage.setItem('hub-ann-fg',annFg);
+    flash('ann-msg','Saved ✓','ok');
+  }
+
+  function clearAnn(){
+    localStorage.removeItem('hub-ann');
+    document.getElementById('ann-text').value='';
+    document.getElementById('ann-preview').classList.remove('on');
+    flash('ann-msg','Cleared','ok');
+  }
+
+  // load existing
+  (function(){
+    const txt=localStorage.getItem('hub-ann')||'';
+    document.getElementById('ann-text').value=txt;
+    const bg=localStorage.getItem('hub-ann-bg');
+    const fg=localStorage.getItem('hub-ann-fg');
+    if(bg){
+      annBg=bg;annFg=fg||'#000';
+      document.querySelectorAll('.color-pill').forEach(p=>{
+        p.classList.remove('sel');
+        if(p.dataset.bg===bg)p.classList.add('sel');
+      });
+    }
+    updatePreview();
+  })();
+  document.getElementById('ann-text').addEventListener('input',updatePreview);
+
+  /* ── Meal planner ── */
+  const DAY_SHORT=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  function buildMealRows(){
+    const today=new Date();
+    const todayStr=today.toISOString().slice(0,10);
+    const meals=JSON.parse(localStorage.getItem('hub-meals')||'{}');
+    const container=document.getElementById('meal-rows');
+    container.innerHTML='';
+    for(let i=0;i<7;i++){
+      const d=new Date(today);
+      d.setDate(today.getDate()+i);
+      const key=d.toISOString().slice(0,10);
+      const isToday=key===todayStr;
+      const row=document.createElement('div');
+      row.className='meal-row';
+      const label=document.createElement('span');
+      label.className='meal-day'+(isToday?' today':'');
+      label.textContent=isToday?'Today':DAY_SHORT[d.getDay()];
+      const inp=document.createElement('input');
+      inp.className='meal-input'+(meals[key]?' has-value':'');
+      inp.type='text';
+      inp.placeholder='What\'s for dinner?';
+      inp.maxLength=60;
+      inp.value=meals[key]||'';
+      inp.dataset.key=key;
+      inp.addEventListener('input',function(){
+        this.classList.toggle('has-value',!!this.value.trim());
+      });
+      row.appendChild(label);
+      row.appendChild(inp);
+      container.appendChild(row);
+    }
+  }
+
+  function saveMeals(){
+    const meals=JSON.parse(localStorage.getItem('hub-meals')||'{}');
+    document.querySelectorAll('.meal-input').forEach(inp=>{
+      const v=inp.value.trim();
+      if(v)meals[inp.dataset.key]=v;
+      else delete meals[inp.dataset.key];
+    });
+    localStorage.setItem('hub-meals',JSON.stringify(meals));
+    flash('meals-save-msg','Meals saved ✓','');
+  }
+
+  buildMealRows();
+
+  /* ── Shared tasks ── */
+  function shSave(){
+    const data=Array.from(document.querySelectorAll('#sh-tl .task-item')).map(li=>({
+      text:li.querySelector('.task-text').textContent,
+      done:li.querySelector('.task-cb').checked
+    }));
+    localStorage.setItem('hub-tasks-shared',JSON.stringify(data));
+  }
+  function shCount(){}
+  function shMkItem(text,done){
+    const li=document.createElement('li');li.className='task-item';
+    const cb=document.createElement('input');cb.type='checkbox';cb.className='task-cb';cb.checked=!!done;
+    cb.onchange=()=>{sp.classList.toggle('done',cb.checked);shSave();};
+    const sp=document.createElement('span');sp.className='task-text'+(done?' done':'');sp.textContent=text;
+    const dl=document.createElement('button');dl.className='task-del';dl.textContent='×';
+    dl.onclick=()=>{li.remove();shSave();};
+    li.appendChild(cb);li.appendChild(sp);li.appendChild(dl);
+    return li;
+  }
+  function shAdd(){
+    const inp=document.getElementById('sh-ti'),t=inp.value.trim();
+    if(!t)return;
+    document.getElementById('sh-tl').appendChild(shMkItem(t,false));
+    inp.value='';shSave();
+  }
+  (function(){
+    const raw=localStorage.getItem('hub-tasks-shared');
+    if(raw)JSON.parse(raw).forEach(t=>document.getElementById('sh-tl').appendChild(shMkItem(t.text,t.done)));
+  })();
+  document.getElementById('sh-ti').addEventListener('keydown',e=>{if(e.key==='Enter')shAdd();});
+
+  /* ── PINs ── */
+  function savePins(){
+    const ali=document.getElementById('pin-ali').value.trim();
+    const mah=document.getElementById('pin-mah').value.trim();
+    const admin=document.getElementById('pin-admin').value.trim();
+    const re=/^\d{4}$/;
+    if((ali&&!re.test(ali))||(mah&&!re.test(mah))||(admin&&!re.test(admin))){
+      flash('pin-msg','PINs must be exactly 4 digits','bad');return;
+    }
+    const current=JSON.parse(localStorage.getItem('hub-pins')||'{"ali":"1234","mah":"5678","admin":"0000"}');
+    if(ali)current.ali=ali;
+    if(mah)current.mah=mah;
+    if(admin)current.admin=admin;
+    localStorage.setItem('hub-pins',JSON.stringify(current));
+    document.getElementById('pin-ali').value='';
+    document.getElementById('pin-mah').value='';
+    document.getElementById('pin-admin').value='';
+    flash('pin-msg','PINs updated ✓','ok');
+  }
+
+  /* enforce digits only on pin inputs */
+  document.querySelectorAll('.pin-input').forEach(inp=>{
+    inp.addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,4);});
+  });
+
+  /* ── Flash helper ── */
+  function flash(id,msg,cls){
+    const el=document.getElementById(id);
+    el.textContent=msg;
+    el.className='msg'+(cls?' '+cls:'');
+    setTimeout(()=>{el.textContent='';},2500);
+  }
+</script>
+</body>
+</html>
